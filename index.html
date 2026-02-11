@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ตู้เต่า IoT Dashboard</title>
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="image.png">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
@@ -50,7 +48,6 @@
         .bg-primary { background-color: var(--primary-color); }
         .border-primary { border-color: var(--primary-color); }
 
-        /* Rainbow Animation */
         @keyframes rainbow-text {
             0% { filter: hue-rotate(0deg); }
             100% { filter: hue-rotate(360deg); }
@@ -59,7 +56,6 @@
             animation: rainbow-text 3s linear infinite;
         }
 
-        /* Hue Slider Styling */
         input[type=range].hue-slider {
             appearance: none;
             width: 100%;
@@ -84,22 +80,22 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-card border-r border-base hidden lg:flex flex-col">
         <div class="p-6 flex items-center gap-3">
-            <img src="image.png" alt="Logo" class="w-8 h-8 rounded-lg object-cover">
+            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white"><i data-lucide="turtle"></i></div>
             <span class="text-xl font-bold tracking-tight">ตู้เต่า</span>
         </div>
         <nav class="flex-1 py-2">
-            <div class="px-4 mb-2 text-xs font-semibold text-muted uppercase tracking-wider">Navigation</div>
+            <div class="px-4 mb-2 text-xs font-semibold text-muted uppercase tracking-wider">เมนูหลัก</div>
             <button onclick="switchTab('dashboard')" id="btn-dashboard" class="sidebar-item-active w-full flex items-center px-6 py-3 text-sm font-medium transition-colors">
-                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i> Dashboards
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i> แดชบอร์ด
             </button>
             <button onclick="switchTab('monitoring')" id="btn-monitoring" class="w-full flex items-center px-6 py-3 text-sm font-medium text-muted hover:bg-slate-100/10 transition-colors">
-                <i data-lucide="activity" class="w-5 h-5 mr-3"></i> Monitoring
+                <i data-lucide="activity" class="w-5 h-5 mr-3"></i> การตรวจสอบ
             </button>
             <button onclick="switchTab('records')" id="btn-records" class="w-full flex items-center px-6 py-3 text-sm font-medium text-muted hover:bg-slate-100/10 transition-colors">
-                <i data-lucide="database" class="w-5 h-5 mr-3"></i> Records
+                <i data-lucide="database" class="w-5 h-5 mr-3"></i> บันทึกข้อมูล
             </button>
             <button onclick="switchTab('settings')" id="btn-settings" class="w-full flex items-center px-6 py-3 text-sm font-medium text-muted hover:bg-slate-100/10 transition-colors mt-1">
-                <i data-lucide="settings" class="w-5 h-5 mr-3"></i> Settings
+                <i data-lucide="settings" class="w-5 h-5 mr-3"></i> ตั้งค่า
             </button>
         </nav>
     </aside>
@@ -118,12 +114,10 @@
                     <span id="status-text" class="text-xs font-medium text-muted">Checking Device...</span>
                 </div>
                 
-                <!-- Rainbow Theme Toggle -->
                 <button onclick="toggleRainbow()" id="btn-rainbow" class="p-2 text-muted hover:text-main transition-colors" title="Rainbow Theme">
                     <i data-lucide="palette"></i>
                 </button>
 
-                <!-- Theme Toggle Button -->
                 <button onclick="toggleDarkMode()" class="p-2 text-muted hover:text-main transition-colors" title="Toggle Theme">
                     <i data-lucide="sun" id="theme-icon-sun"></i>
                     <i data-lucide="moon" id="theme-icon-moon" class="hidden"></i>
@@ -138,31 +132,30 @@
                     <div class="bg-card p-6 rounded-xl border border-base card-shadow">
                         <div class="flex justify-between items-start mb-4">
                             <div class="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg text-primary"><i data-lucide="thermometer"></i></div>
-                            <!-- ปรับแก้ส่วน Live: ใช้ background แบบโปร่งใส (opacity-10) เพื่อไม่ให้ทับตัวอักษร -->
                             <span class="text-xs font-bold text-primary bg-[hsla(var(--primary-h),var(--primary-s),var(--primary-l),0.1)] px-2.5 py-1 rounded-md">Live</span>
                         </div>
-                        <h3 class="text-muted text-sm font-medium">Current Temperature</h3>
+                        <h3 class="text-muted text-sm font-medium">อุณหภูมิปัจจุบัน</h3>
                         <p class="text-2xl font-bold mt-1" id="stat-temp">--.- °C</p>
                     </div>
                     <div class="bg-card p-6 rounded-xl border border-base card-shadow">
                         <div class="flex justify-between items-start mb-4">
                             <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg"><i data-lucide="cpu"></i></div>
                         </div>
-                        <h3 class="text-muted text-sm font-medium">Device Status</h3>
+                        <h3 class="text-muted text-sm font-medium">สถานะอุปกรณ์</h3>
                         <p class="text-2xl font-bold mt-1" id="stat-status">Offline</p>
                     </div>
                     <div class="bg-card p-6 rounded-xl border border-base card-shadow">
                         <div class="flex justify-between items-start mb-4">
                             <div class="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-lg"><i data-lucide="activity"></i></div>
                         </div>
-                        <h3 class="text-muted text-sm font-medium">Total Logs</h3>
+                        <h3 class="text-muted text-sm font-medium">บันทึกทั้งหมด</h3>
                         <p class="text-2xl font-bold mt-1" id="stat-total-logs">0</p>
                     </div>
                     <div class="bg-card p-6 rounded-xl border border-base card-shadow">
                         <div class="flex justify-between items-start mb-4">
                             <div class="p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg"><i data-lucide="history"></i></div>
                         </div>
-                        <h3 class="text-muted text-sm font-medium">Last Sync</h3>
+                        <h3 class="text-muted text-sm font-medium">ซิงค์ล่าสุด</h3>
                         <p class="text-2xl font-bold mt-1 text-sm" id="stat-sync">Never</p>
                     </div>
                 </div>
@@ -178,7 +171,7 @@
                                 <div id="online-indicator" class="absolute top-4 right-4 w-4 h-4 rounded-full bg-slate-300"></div>
                             </div>
                             <div class="flex-1 space-y-4">
-                                <h2 class="text-3xl font-bold text-main leading-tight">Environmental<br>Monitoring Center</h2>
+                                <h2 class="text-3xl font-bold text-main leading-tight">Environmental Monitoring Center</h2>
                                 <p class="text-muted">ระบบติดตามและบันทึกอุณหภูมิแบบ Real-time ข้อมูลจะถูกบันทึกอัตโนมัติเมื่อมีการเปลี่ยนแปลง</p>
                                 <div class="pt-4 flex gap-3">
                                     <button onclick="triggerManualPush()" id="push-btn" class="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg flex items-center gap-2">
@@ -189,7 +182,7 @@
                         </div>
                     </div>
                     <div class="bg-card rounded-2xl border border-base card-shadow p-6">
-                        <h3 class="font-bold text-main mb-6">Recent Records (Real)</h3>
+                        <h3 class="font-bold text-main mb-6">บันทึกล่าสุด</h3>
                         <div id="mini-records" class="space-y-4">
                             <div class="text-center py-10 text-muted text-sm">No live data recorded yet</div>
                         </div>
@@ -202,7 +195,7 @@
             <div id="tab-settings" class="hidden max-w-2xl mx-auto">
                 <div class="bg-card rounded-2xl border border-base card-shadow overflow-hidden">
                     <div class="p-8 border-b border-base">
-                        <h2 class="text-2xl font-bold text-main">Interface Settings</h2>
+                        <h2 class="text-2xl font-bold text-main">ตั้งค่าอินเตอร์เฟซ</h2>
                         <p class="text-muted">เลือกสีที่คุณต้องการเพียงแค่เลื่อนสไลเดอร์</p>
                     </div>
                     <div class="p-8 space-y-10">
@@ -213,12 +206,11 @@
                             </div>
                             <input type="range" id="input-h" min="0" max="360" value="220" class="hue-slider" oninput="updateColorSystem()">
                         </div>
-
                         <div class="p-6 rounded-2xl border border-base flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50">
                             <div class="w-12 h-12 rounded-full bg-primary shadow-lg border-2 border-white dark:border-slate-600"></div>
                             <div>
                                 <p class="font-bold text-main">ตัวอย่างสีและขอบที่เลือก</p>
-                                <p class="text-sm text-muted">ขอบของการ์ดและองค์ประกอบจะเปลี่ยนตามสีที่คุณเลือก</p>
+                                <p class="text-sm text-muted">ขอบของการ์ดจะเปลี่ยนตามสีที่คุณเลือก</p>
                             </div>
                         </div>
                     </div>
@@ -228,18 +220,19 @@
             <!-- TAB: MONITORING -->
             <div id="tab-monitoring" class="hidden">
                 <div class="bg-card rounded-2xl border border-base card-shadow p-8 h-[500px] flex items-center justify-center text-center">
-                    <div><i data-lucide="line-chart" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i><p class="text-muted">Monitoring data placeholder...</p></div>
+                    <div><i data-lucide="line-chart" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i><p class="text-muted">กำลังพัฒนาส่วนกราฟแสดงผล...</p></div>
                 </div>
             </div>
+
             <!-- TAB: RECORDS -->
             <div id="tab-records" class="hidden">
                  <div class="bg-card rounded-2xl border border-base card-shadow overflow-hidden">
                     <table class="w-full text-left">
                         <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-base">
                             <tr>
-                                <th class="px-6 py-4 text-xs font-bold text-muted uppercase">Timestamp</th>
-                                <th class="px-6 py-4 text-xs font-bold text-muted uppercase">Temperature</th>
-                                <th class="px-6 py-4 text-xs font-bold text-muted uppercase">Status</th>
+                                <th class="px-6 py-4 text-xs font-bold text-muted uppercase">เวลา</th>
+                                <th class="px-6 py-4 text-xs font-bold text-muted uppercase">อุณหภูมิ</th>
+                                <th class="px-6 py-4 text-xs font-bold text-muted uppercase">สถานะ</th>
                             </tr>
                         </thead>
                         <tbody id="full-records-body">
@@ -252,12 +245,14 @@
     </main>
 
     <script>
+        // แก้ไข IP ของ ESP32 ที่นี่
+        const ESP_IP = "192.168.1.100"; 
+        
         let isOnline = false;
         let currentTemp = null; 
         let realRecords = []; 
         let isDarkMode = false;
         let isRainbow = false;
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwkVWSaZxv8Y8I5K_m5t3vFusNbBcSPYSBmHe3hby1c82PFAdI94xxNpgj5r9eFAm0FGg/exec";
 
         window.onload = () => {
             lucide.createIcons();
@@ -270,11 +265,9 @@
             const h = localStorage.getItem('turtle_h') || 220;
             const dark = localStorage.getItem('turtle_dark') === 'true';
             const rainbow = localStorage.getItem('turtle_rainbow') === 'true';
-            
             document.getElementById('input-h').value = h;
             if(dark) toggleDarkMode();
             if(rainbow) toggleRainbow();
-            
             applyColors(h);
         }
 
@@ -290,7 +283,6 @@
             isRainbow = !isRainbow;
             const mainBody = document.getElementById('main-body');
             const btn = document.getElementById('btn-rainbow');
-            
             if(isRainbow) {
                 mainBody.classList.add('rainbow-active');
                 btn.classList.add('text-primary');
@@ -315,13 +307,17 @@
 
         async function checkDeviceConnection() {
             try {
-                const res = await fetch('http://192.168.1.100/status'); 
+                // เรียกไปที่ /status ของ ESP32
+                const res = await fetch(`http://${ESP_IP}/status`, { 
+                    method: 'GET',
+                    mode: 'cors'
+                }); 
                 if(!res.ok) throw new Error();
                 const data = await res.json();
                 isOnline = true;
                 if (data.temperature !== currentTemp) {
                     currentTemp = data.temperature;
-                    addRealRecord(currentTemp);
+                    addLocalRecord(currentTemp);
                 }
             } catch (e) {
                 isOnline = false;
@@ -330,12 +326,12 @@
             updateUI();
         }
 
-        function addRealRecord(temp) {
+        function addLocalRecord(temp) {
             const newRecord = {
                 timestamp: new Date().toLocaleTimeString(),
                 date: new Date().toLocaleDateString(),
                 value: temp.toFixed(1),
-                status: 'SUCCESS'
+                status: 'LIVE'
             };
             realRecords.unshift(newRecord);
             if(realRecords.length > 50) realRecords.pop();
@@ -350,7 +346,7 @@
                 mini.innerHTML = realRecords.slice(0, 4).map(r => `
                     <div class="flex items-center justify-between p-3 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-base">
                         <div class="flex flex-col"><span class="text-xs text-muted">${r.timestamp}</span><span class="text-sm font-bold text-main">${r.value} °C</span></div>
-                        <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded">SYNCED</span>
+                        <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded">${r.status}</span>
                     </div>
                 `).join('');
             }
@@ -384,9 +380,8 @@
                 onlineIndicator.className = "absolute top-4 right-4 w-4 h-4 rounded-full bg-emerald-500 shadow-lg online-pulse";
                 statStatus.innerText = "Connected";
                 statStatus.className = "text-2xl font-bold mt-1 text-emerald-600";
-                bigTemp.innerText = currentTemp;
-                statTemp.innerText = currentTemp + " °C";
-                tempContainer.classList.remove('bg-slate-50', 'dark:bg-slate-800/50');
+                bigTemp.innerText = currentTemp.toFixed(1);
+                statTemp.innerText = currentTemp.toFixed(1) + " °C";
                 tempContainer.style.backgroundColor = "var(--primary-bg)";
             } else {
                 statusDot.className = "w-2 h-2 rounded-full bg-slate-300";
@@ -396,7 +391,6 @@
                 statStatus.className = "text-2xl font-bold mt-1 text-muted";
                 bigTemp.innerText = "--.-";
                 statTemp.innerText = "--.- °C";
-                tempContainer.classList.add('bg-slate-50', 'dark:bg-slate-800/50');
                 tempContainer.style.backgroundColor = "";
             }
         }
@@ -405,13 +399,26 @@
             if (!isOnline || currentTemp === null) return;
             const btn = document.getElementById('push-btn');
             btn.disabled = true;
-            btn.innerText = "Syncing...";
+            btn.innerText = "Pushing to ESP...";
+            
             try {
-                await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ value: currentTemp }) });
-                document.getElementById('stat-sync').innerText = new Date().toLocaleTimeString();
-                addRealRecord(currentTemp);
-            } catch (e) { console.error("Sync failed"); }
-            finally {
+                // ส่งคำสั่งไปที่ ESP32 เพื่อให้ ESP32 เป็นคน Push ไป Cloud
+                const res = await fetch(`http://${ESP_IP}/push`, { 
+                    method: 'POST',
+                    mode: 'cors'
+                });
+                
+                if(res.ok) {
+                    document.getElementById('stat-sync').innerText = new Date().toLocaleTimeString();
+                    // แสดงสถานะว่าซิงค์แล้วใน Record
+                    if(realRecords.length > 0) realRecords[0].status = 'SYNCED';
+                    updateRecordsUI();
+                } else {
+                    console.error("ESP32 Cloud push failed");
+                }
+            } catch (e) { 
+                console.error("Connection to ESP32 failed"); 
+            } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i data-lucide="cloud-upload" class="w-5 h-5"></i> Push to Cloud';
                 lucide.createIcons();
