@@ -291,7 +291,7 @@
             lucide.createIcons();
             loadPrefs();
             
-            // ตรวจสอบและแสดงแถบสลับ Protocol ถ้าเป็น HTTPS
+            // ตรวจสอบโปรโตคอล
             if (window.location.protocol === 'https:') {
                 document.getElementById('https-fix-banner').classList.remove('hidden');
                 document.getElementById('github-tip').classList.remove('hidden');
@@ -304,13 +304,12 @@
             setInterval(checkDeviceConnection, 5000); 
         };
 
-        // ฟังก์ชันช่วยสลับ Protocol อัตโนมัติ
+        // ฟังก์ชันสลับ Protocol ที่ปรับปรุงใหม่
         function fixProtocol() {
-            const currentUrl = window.location.href;
-            if (currentUrl.startsWith('https://')) {
-                const newUrl = currentUrl.replace('https://', 'http://');
-                window.location.replace(newUrl); // ใช้ replace เพื่อไม่ให้กด Back กลับมาเจอหน้าเดิม
-            }
+            // ดึง URL ปัจจุบันและเปลี่ยน https เป็น http
+            const targetUrl = window.location.href.replace(/^https:/, 'http:');
+            // ใช้การกำหนด href โดยตรง และบังคับโหลดใหม่
+            window.location.assign(targetUrl);
         }
 
         function loadPrefs() {
@@ -358,6 +357,13 @@
         }
 
         async function checkDeviceConnection() {
+            // ถ้าหน้าเว็บเป็น https จะไม่พยายามดึงข้อมูลเพื่อเลี่ยง console error จำนวนมาก
+            if (window.location.protocol === 'https:') {
+                isOnline = false;
+                updateUI();
+                return;
+            }
+
             try {
                 const res = await fetch(`http://${ESP_IP}/status`, { 
                     method: 'GET',
@@ -436,7 +442,7 @@
                 tempContainer.style.backgroundColor = "var(--primary-bg)";
             } else {
                 statusDot.className = "w-2 h-2 rounded-full bg-slate-300";
-                statusText.innerText = "Device Offline";
+                statusText.innerText = (window.location.protocol === 'https:') ? "Waiting for HTTP..." : "Device Offline";
                 onlineIndicator.className = "absolute top-4 right-4 w-4 h-4 rounded-full bg-slate-300";
                 statStatus.innerText = "Offline";
                 statStatus.className = "text-2xl font-bold mt-1 text-muted";
