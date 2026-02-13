@@ -111,7 +111,7 @@
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 border border-base rounded-full">
                     <div id="status-dot" class="w-2 h-2 rounded-full bg-slate-400"></div>
-                    <span id="status-text" class="text-xs font-medium text-muted">Checking Device...</span>
+                    <span id="status-text" class="text-xs font-medium text-muted">Connecting...</span>
                 </div>
                 
                 <button onclick="toggleRainbow()" id="btn-rainbow" class="p-2 text-muted hover:text-main transition-colors" title="Rainbow Theme">
@@ -142,7 +142,7 @@
                             <div class="p-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-lg"><i data-lucide="cpu"></i></div>
                         </div>
                         <h3 class="text-muted text-sm font-medium">สถานะอุปกรณ์</h3>
-                        <p class="text-2xl font-bold mt-1" id="stat-status">Offline</p>
+                        <p class="text-2xl font-bold mt-1" id="stat-status">Waiting</p>
                     </div>
                     <div class="bg-card p-6 rounded-xl border border-base card-shadow">
                         <div class="flex justify-between items-start mb-4">
@@ -155,8 +155,8 @@
                         <div class="flex justify-between items-start mb-4">
                             <div class="p-2 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded-lg"><i data-lucide="history"></i></div>
                         </div>
-                        <h3 class="text-muted text-sm font-medium">ซิงค์ล่าสุด</h3>
-                        <p class="text-2xl font-bold mt-1 text-sm" id="stat-sync">Never</p>
+                        <h3 class="text-muted text-sm font-medium">อัปเดตล่าสุด</h3>
+                        <p class="text-2xl font-bold mt-1 text-sm" id="stat-sync">--:--:--</p>
                     </div>
                 </div>
 
@@ -172,19 +172,20 @@
                             </div>
                             <div class="flex-1 space-y-4">
                                 <h2 class="text-3xl font-bold text-main leading-tight">Environmental Monitoring Center</h2>
-                                <p class="text-muted">ระบบติดตามและบันทึกอุณหภูมิแบบ Real-time ข้อมูลจะถูกบันทึกอัตโนมัติเมื่อมีการเปลี่ยนแปลง</p>
+                                <p class="text-muted">ระบบติดตามและบันทึกอุณหภูมิจาก Firebase Realtime Database ข้อมูลจะถูกแสดงผลทันทีที่ ESP32 ส่งมา</p>
                                 <div class="pt-4 flex gap-3">
-                                    <button onclick="triggerManualPush()" id="push-btn" class="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg flex items-center gap-2">
-                                        <i data-lucide="cloud-upload" class="w-5 h-5"></i> Push to Cloud
+                                    <!-- ปุ่มนี้เปลี่ยนเป็น Force Refresh หน้าเว็บแทน -->
+                                    <button onclick="window.location.reload()" class="px-6 py-3 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition-all shadow-lg flex items-center gap-2">
+                                        <i data-lucide="refresh-cw" class="w-5 h-5"></i> Refresh Page
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="bg-card rounded-2xl border border-base card-shadow p-6">
-                        <h3 class="font-bold text-main mb-6">บันทึกล่าสุด</h3>
+                        <h3 class="font-bold text-main mb-6">Log ล่าสุดจาก ESP32</h3>
                         <div id="mini-records" class="space-y-4">
-                            <div class="text-center py-10 text-muted text-sm">No live data recorded yet</div>
+                            <div class="text-center py-10 text-muted text-sm">Waiting for data...</div>
                         </div>
                         <button onclick="switchTab('records')" class="w-full mt-6 py-3 text-sm font-semibold text-primary hover:bg-slate-100/10 rounded-xl transition-colors">View All Records</button>
                     </div>
@@ -220,7 +221,7 @@
             <!-- TAB: MONITORING -->
             <div id="tab-monitoring" class="hidden">
                 <div class="bg-card rounded-2xl border border-base card-shadow p-8 h-[500px] flex items-center justify-center text-center">
-                    <div><i data-lucide="line-chart" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i><p class="text-muted">กำลังพัฒนาส่วนกราฟแสดงผล...</p></div>
+                    <div><i data-lucide="line-chart" class="w-16 h-16 text-slate-200 mx-auto mb-4"></i><p class="text-muted">ส่วนกราฟแสดงผล (Coming Soon)</p></div>
                 </div>
             </div>
 
@@ -236,7 +237,7 @@
                             </tr>
                         </thead>
                         <tbody id="full-records-body">
-                            <tr><td colspan="3" class="px-6 py-10 text-center text-muted">No real data collected yet.</td></tr>
+                            <tr><td colspan="3" class="px-6 py-10 text-center text-muted">No data received yet.</td></tr>
                         </tbody>
                     </table>
                  </div>
@@ -244,28 +245,170 @@
         </div>
     </main>
 
-    <script>
-        // แก้ไข IP ของ ESP32 ที่นี่
-        const ESP_IP = "192.168.1.100"; 
-        
+    <!-- FIREBASE & LOGIC SCRIPT -->
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // --- ตั้งค่า Firebase Config ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyA55KQWSV7LTD_vFmUEeEb62QpWyZYTK9k",
+          authDomain: "taon-3b930.firebaseapp.com",
+          databaseURL: "https://taon-3b930-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "taon-3b930",
+          storageBucket: "taon-3b930.firebasestorage.app",
+          messagingSenderId: "941236437650",
+          appId: "1:941236437650:web:8f3c096a315267a73f9c4b"
+        };
+
+        // เริ่มต้น Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ตัวแปรสำหรับ Logic หน้าเว็บ
+        let realRecords = [];
         let isOnline = false;
-        let currentTemp = null; 
-        let realRecords = []; 
+        let lastUpdate = 0;
+
+        // --- ฟังชั่นหลัก: เชื่อมต่อ Firebase ---
+        function startListening() {
+            // ฟังข้อมูลที่ path 'sensors/data' (เราจะให้ ESP32 ส่งมาที่นี่)
+            const sensorRef = ref(db, 'sensors/data');
+            
+            onValue(sensorRef, (snapshot) => {
+                const data = snapshot.val();
+                
+                if (data) {
+                    // มีข้อมูลส่งมา
+                    lastUpdate = Date.now();
+                    isOnline = true;
+                    
+                    // อัปเดต UI ด้วยข้อมูลใหม่
+                    updateDashboard(data.temperature, data.timestamp);
+                    
+                    // เพิ่มลงในตารางประวัติ (ในหน้าเว็บ)
+                    addLocalRecord(data.temperature, data.timestamp);
+                }
+            }, (error) => {
+                console.error("Firebase Error:", error);
+                isOnline = false;
+                updateStatusUI();
+            });
+        }
+
+        // --- ฟังก์ชันอัปเดตหน้าจอ ---
+        function updateDashboard(temp, timestamp) {
+            // อัปเดตตัวเลข
+            const tempVal = parseFloat(temp).toFixed(1);
+            document.getElementById('big-temp-val').innerText = tempVal;
+            document.getElementById('stat-temp').innerText = tempVal + " °C";
+            
+            // อัปเดตเวลาล่าสุด
+            document.getElementById('stat-sync').innerText = timestamp || new Date().toLocaleTimeString();
+            
+            updateStatusUI();
+        }
+
+        function updateStatusUI() {
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            const onlineIndicator = document.getElementById('online-indicator');
+            const statStatus = document.getElementById('stat-status');
+            const tempContainer = document.getElementById('temp-circle-container');
+
+            // เช็คว่าข้อมูลไม่อัปเดตนานเกิน 60 วินาทีหรือไม่ (ถ้าเกินถือว่า Offline)
+            const now = Date.now();
+            if (now - lastUpdate > 60000 && lastUpdate !== 0) {
+                isOnline = false;
+            }
+
+            if (isOnline) {
+                statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 online-pulse";
+                statusText.innerText = "Device Online (Firebase)";
+                onlineIndicator.className = "absolute top-4 right-4 w-4 h-4 rounded-full bg-emerald-500 shadow-lg online-pulse";
+                statStatus.innerText = "Online";
+                statStatus.className = "text-2xl font-bold mt-1 text-emerald-600";
+                tempContainer.style.backgroundColor = "var(--primary-bg)";
+            } else {
+                statusDot.className = "w-2 h-2 rounded-full bg-slate-300";
+                statusText.innerText = "Device Offline";
+                onlineIndicator.className = "absolute top-4 right-4 w-4 h-4 rounded-full bg-slate-300";
+                statStatus.innerText = "Offline";
+                statStatus.className = "text-2xl font-bold mt-1 text-muted";
+                tempContainer.style.backgroundColor = "";
+            }
+        }
+
+        // --- จัดการข้อมูล Record (UI Only) ---
+        function addLocalRecord(temp, ts) {
+            const timeStr = ts || new Date().toLocaleTimeString();
+            // เช็คไม่ให้ซ้ำ (ถ้าค่าเดิมและเวลาเดิม)
+            if (realRecords.length > 0 && realRecords[0].timestamp === timeStr && realRecords[0].value === parseFloat(temp).toFixed(1)) return;
+
+            const newRecord = {
+                timestamp: timeStr,
+                date: new Date().toLocaleDateString(),
+                value: parseFloat(temp).toFixed(1),
+                status: 'REC'
+            };
+            realRecords.unshift(newRecord);
+            if(realRecords.length > 50) realRecords.pop();
+            
+            // Render ตาราง
+            updateRecordsTable();
+            document.getElementById('stat-total-logs').innerText = realRecords.length;
+        }
+
+        function updateRecordsTable() {
+            // Mini Table (หน้าแรก)
+            const mini = document.getElementById('mini-records');
+            mini.innerHTML = realRecords.slice(0, 4).map(r => `
+                <div class="flex items-center justify-between p-3 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-base">
+                    <div class="flex flex-col"><span class="text-xs text-muted">${r.timestamp}</span><span class="text-sm font-bold text-main">${r.value} °C</span></div>
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded">${r.status}</span>
+                </div>
+            `).join('');
+
+            // Full Table (หน้า Records)
+            const body = document.getElementById('full-records-body');
+            body.innerHTML = realRecords.map(r => `
+                <tr class="hover:bg-slate-100/5 border-b border-base">
+                    <td class="px-6 py-4 text-sm text-muted">${r.date}, ${r.timestamp}</td>
+                    <td class="px-6 py-4 text-sm font-bold text-main">${r.value} °C</td>
+                    <td class="px-6 py-4 text-sm"><span class="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded text-xs font-bold">${r.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // --- เริ่มต้นการทำงาน ---
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+            loadPrefs(); // โหลดค่าสีที่เคยตั้งไว้ (Function เดิมที่อยู่ข้างล่าง)
+            
+            // เริ่มฟังข้อมูลจาก Firebase
+            startListening();
+            
+            // เช็คสถานะ Offline ทุก 5 วินาที
+            setInterval(updateStatusUI, 5000);
+        });
+
+    </script>
+
+    <!-- Script เดิมสำหรับ UI Logic (ย้ายมาอยู่นอก module เพื่อให้ HTML เรียกใช้ได้) -->
+    <script>
+        // Global functions for HTML onclick events
         let isDarkMode = false;
         let isRainbow = false;
-
-        window.onload = () => {
-            lucide.createIcons();
-            loadPrefs();
-            checkDeviceConnection();
-            setInterval(checkDeviceConnection, 5000); 
-        };
 
         function loadPrefs() {
             const h = localStorage.getItem('turtle_h') || 220;
             const dark = localStorage.getItem('turtle_dark') === 'true';
             const rainbow = localStorage.getItem('turtle_rainbow') === 'true';
-            document.getElementById('input-h').value = h;
+            
+            const inputH = document.getElementById('input-h');
+            if(inputH) inputH.value = h;
+            
             if(dark) toggleDarkMode();
             if(rainbow) toggleRainbow();
             applyColors(h);
@@ -303,126 +446,6 @@
             document.documentElement.style.setProperty('--primary-h', h);
             const color = `hsl(${h}, 70%, 50%)`;
             document.getElementById('hex-display').innerText = color;
-        }
-
-        async function checkDeviceConnection() {
-            try {
-                // เรียกไปที่ /status ของ ESP32
-                const res = await fetch(`http://${ESP_IP}/status`, { 
-                    method: 'GET',
-                    mode: 'cors'
-                }); 
-                if(!res.ok) throw new Error();
-                const data = await res.json();
-                isOnline = true;
-                if (data.temperature !== currentTemp) {
-                    currentTemp = data.temperature;
-                    addLocalRecord(currentTemp);
-                }
-            } catch (e) {
-                isOnline = false;
-                currentTemp = null;
-            }
-            updateUI();
-        }
-
-        function addLocalRecord(temp) {
-            const newRecord = {
-                timestamp: new Date().toLocaleTimeString(),
-                date: new Date().toLocaleDateString(),
-                value: temp.toFixed(1),
-                status: 'LIVE'
-            };
-            realRecords.unshift(newRecord);
-            if(realRecords.length > 50) realRecords.pop();
-            updateRecordsUI();
-        }
-
-        function updateRecordsUI() {
-            const mini = document.getElementById('mini-records');
-            if (realRecords.length === 0) {
-                mini.innerHTML = `<div class="text-center py-10 text-muted text-sm">No live data recorded yet</div>`;
-            } else {
-                mini.innerHTML = realRecords.slice(0, 4).map(r => `
-                    <div class="flex items-center justify-between p-3 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-base">
-                        <div class="flex flex-col"><span class="text-xs text-muted">${r.timestamp}</span><span class="text-sm font-bold text-main">${r.value} °C</span></div>
-                        <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded">${r.status}</span>
-                    </div>
-                `).join('');
-            }
-            const body = document.getElementById('full-records-body');
-            if (realRecords.length === 0) {
-                body.innerHTML = `<tr><td colspan="3" class="px-6 py-10 text-center text-muted">No real data collected yet.</td></tr>`;
-            } else {
-                body.innerHTML = realRecords.map(r => `
-                    <tr class="hover:bg-slate-100/5 border-b border-base">
-                        <td class="px-6 py-4 text-sm text-muted">${r.date}, ${r.timestamp}</td>
-                        <td class="px-6 py-4 text-sm font-bold text-main">${r.value} °C</td>
-                        <td class="px-6 py-4 text-sm"><span class="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded text-xs font-bold">${r.status}</span></td>
-                    </tr>
-                `).join('');
-            }
-            document.getElementById('stat-total-logs').innerText = realRecords.length;
-        }
-
-        function updateUI() {
-            const statusDot = document.getElementById('status-dot');
-            const statusText = document.getElementById('status-text');
-            const onlineIndicator = document.getElementById('online-indicator');
-            const statStatus = document.getElementById('stat-status');
-            const bigTemp = document.getElementById('big-temp-val');
-            const statTemp = document.getElementById('stat-temp');
-            const tempContainer = document.getElementById('temp-circle-container');
-
-            if (isOnline && currentTemp !== null) {
-                statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 online-pulse";
-                statusText.innerText = "Device Online";
-                onlineIndicator.className = "absolute top-4 right-4 w-4 h-4 rounded-full bg-emerald-500 shadow-lg online-pulse";
-                statStatus.innerText = "Connected";
-                statStatus.className = "text-2xl font-bold mt-1 text-emerald-600";
-                bigTemp.innerText = currentTemp.toFixed(1);
-                statTemp.innerText = currentTemp.toFixed(1) + " °C";
-                tempContainer.style.backgroundColor = "var(--primary-bg)";
-            } else {
-                statusDot.className = "w-2 h-2 rounded-full bg-slate-300";
-                statusText.innerText = "Device Offline";
-                onlineIndicator.className = "absolute top-4 right-4 w-4 h-4 rounded-full bg-slate-300";
-                statStatus.innerText = "Offline";
-                statStatus.className = "text-2xl font-bold mt-1 text-muted";
-                bigTemp.innerText = "--.-";
-                statTemp.innerText = "--.- °C";
-                tempContainer.style.backgroundColor = "";
-            }
-        }
-
-        async function triggerManualPush() {
-            if (!isOnline || currentTemp === null) return;
-            const btn = document.getElementById('push-btn');
-            btn.disabled = true;
-            btn.innerText = "Pushing to ESP...";
-            
-            try {
-                // ส่งคำสั่งไปที่ ESP32 เพื่อให้ ESP32 เป็นคน Push ไป Cloud
-                const res = await fetch(`http://${ESP_IP}/push`, { 
-                    method: 'POST',
-                    mode: 'cors'
-                });
-                
-                if(res.ok) {
-                    document.getElementById('stat-sync').innerText = new Date().toLocaleTimeString();
-                    // แสดงสถานะว่าซิงค์แล้วใน Record
-                    if(realRecords.length > 0) realRecords[0].status = 'SYNCED';
-                    updateRecordsUI();
-                } else {
-                    console.error("ESP32 Cloud push failed");
-                }
-            } catch (e) { 
-                console.error("Connection to ESP32 failed"); 
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="cloud-upload" class="w-5 h-5"></i> Push to Cloud';
-                lucide.createIcons();
-            }
         }
 
         function switchTab(tabId) {
